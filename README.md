@@ -28,4 +28,4 @@ hi :)
 | `data/midwest.csv` | Data voor de oefeningen |
 | `renv/`, `renv.lock`, `.Rprofile` | Zorgen dat het project zijn eigen pakkettenbibliotheek gebruikt |
 
-halo
+how are u?
