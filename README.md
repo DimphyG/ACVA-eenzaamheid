@@ -25,3 +25,5 @@ Een eerste kennismaking met data in R: bestanden inladen (csv, Excel, rds) en be
 | `data/kittens.rds` | Dezelfde data in het R-formaat |
 | `data/midwest.csv` | Data voor de oefeningen |
 | `renv/`, `renv.lock`, `.Rprofile` | Zorgen dat het project zijn eigen pakkettenbibliotheek gebruikt |
+
+halo
