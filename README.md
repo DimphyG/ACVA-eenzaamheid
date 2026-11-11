@@ -30,4 +30,4 @@ hi :)
 
 how are u?
 
-Goed!!mooi meid! sameeeee
+Goed!!mooi meid! sameeeeemooi meid! sameeeee
