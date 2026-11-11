@@ -2,6 +2,8 @@
 
 Een eerste kennismaking met data in R: bestanden inladen (csv, Excel, rds) en bekijken wat erin zit.
 
+hi :)
+
 ## Aan de slag
 
 1.  Download of kloon deze repository.
