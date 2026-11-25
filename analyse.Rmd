@@ -169,6 +169,49 @@ ggplot(analyse_compleet, aes(x = lbm, y = eenzaam, colour = stadsdeel)) +
        colour = "Stadsdeel")
 ```
 
+## 1.8 Controlevariabele: WOZ-waarde
+
+**Bron:** CBS, Kerncijfers wijken en buurten 2024 (StatLine-tabel 85984NED), Excelbestand van cbs.nl. Gedownload op 25 november 2026, opgeslagen als `data/kwb2024.xlsx`.
+
+Leefbare buurten zijn vaak ook duurdere buurten. Met de WOZ-waarde erbij kunnen we later (H13) kijken of leefbaarheid samenhangt met eenzaamheid **bij gelijke WOZ-waarde**.
+
+Een Excelbestand lees je in met `read_excel()`.
+
+```{r woz_inladen}
+kwb_ruw <- read_excel("data/kwb2024.xlsx")
+```
+
+Het bestand heeft meer dan 100 kolommen. De WOZ-waarde staat in `g_wozbag`, in duizenden euro's. Een punt betekent: geen cijfer.
+
+```{r woz}
+woz <- kwb_ruw |>
+  filter(recs == "Buurt", gm_naam == "Amsterdam") |>
+  mutate(woz = as.numeric(na_if(as.character(g_wozbag), "."))) |>
+  select(buurtcode = gwb_code, woz)
+```
+
+Koppelen aan de rest, en opnieuw alleen de buurten houden waar alles bekend is:
+
+```{r woz_koppelen}
+analyse_data <- analyse_data |>
+  left_join(woz, by = "buurtcode")
+
+analyse_compleet <- analyse_data |>
+  filter(!is.na(eenzaam), !is.na(lbm), !is.na(woz))
+
+count(analyse_compleet, stadsdeel)
+```
+
+Hangt de WOZ-waarde ook samen met eenzaamheid?
+
+```{r woz_spreidingsdiagram}
+ggplot(analyse_compleet, aes(x = woz, y = eenzaam, colour = stadsdeel)) +
+  geom_point(size = 2) +
+  labs(x = "Gemiddelde WOZ-waarde 2024 (x 1.000 euro)",
+       y = "Eenzaam (% volwassenen, 2024)",
+       colour = "Stadsdeel")
+```
+
 # Deel 2 - Methoden
 
 ## 2.1 Populatie
@@ -181,7 +224,7 @@ Welke buurten, hoeveel per stadsdeel, en welke vallen af (en waarom)?
 
 - **Afhankelijke variabele:** `eenzaam`, percentage eenzame volwassenen per buurt (Gezondheidsmonitor 2024)
 - **Onafhankelijke variabele(n):** `lbm`, leefbaarheidsscore per buurt (Leefbaarometer 2024)
-- **Eventuele controlevariabelen:**
+- **Controlevariabele:** `woz`, gemiddelde WOZ-waarde van woningen per buurt (CBS 2024)
 
 <!-- Per variabele: wat meet het, eenheid, meetniveau -->
 
