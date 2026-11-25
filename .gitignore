@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 .DS_Store
+
+# Te groot voor GitHub (>100 MB)
+data/open-data-leefbaarometer-meting-2024.zip

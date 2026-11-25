@@ -1,0 +1,202 @@
+---
+title: "Leefbaarheid en eenzaamheid in Amsterdam Zuid en Zuidoost"
+author: "Namen en studentnummers hier"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# Voorbereiding
+
+Open eerst het project door te dubbelklikken op `eenzaamheid_leefbaarheid.Rproj`. Voer daarna de blokken code één voor één uit met het groene pijltje.
+
+```{r pakketten, message=FALSE}
+library(tidyverse)
+library(readxl)
+```
+
+## Staan de bestanden op de goede plek?
+
+```{r werkmap}
+getwd()
+list.files("data")
+```
+
+Zie je hier je datasets staan? Dan kan R ze vinden.
+
+# Deel 1 - De data
+
+## 1.1 Eenzaamheid inladen
+
+**Bron:** CBS StatLine, tabel 50150NED "Gezondheid per wijk en buurt; 2012/2016/2020/2022/2024 (indeling 2024)". Gezondheidsmonitor Volwassenen en Ouderen 2024, GGD'en/CBS/RIVM, bewerking volgens de SMAP-methodiek van RIVM. Gedownload op 19 november 2026.
+
+Het bestand gebruikt een puntkomma tussen de kolommen, maar een **punt** als decimaalteken (47.2). Daarom geen `read_csv2()`, want die leest 47.2 als 472. We gebruiken `read_delim()` en zeggen zelf welk teken tussen de kolommen staat. Alles lezen we eerst als tekst (`"c"`), omdat er spaties rond de waarden staan.
+
+```{r eenzaamheid_inladen}
+eenzaamheid_ruw <- read_delim(
+  "data/50150NED_UntypedDataSet_20261119121801.csv",
+  delim = ";",
+  col_types = cols(.default = "c")
+)
+```
+
+De spaties weghalen met `trimws()`, in alle kolommen tegelijk:
+
+```{r eenzaamheid_spaties}
+eenzaamheid_ruw <- eenzaamheid_ruw |>
+  mutate(across(everything(), trimws))
+
+glimpse(eenzaamheid_ruw)
+```
+
+## 1.2 Wat zit erin?
+
+```{r eenzaamheid_bekijken}
+count(eenzaamheid_ruw, SoortRegio_2)
+count(eenzaamheid_ruw, Leeftijd)
+```
+
+Het bestand bevat heel Nederland: land, gemeenten, wijken en buurten, en drie leeftijdsgroepen. Elke buurt staat er dus drie keer in. Net als bij de kittens (één rij per provincie per jaar) kiezen we eerst wat één waarneming is.
+
+## 1.3 Alleen buurten in Zuid en Zuidoost
+
+Amsterdam codeert buurten met een letter voor het stadsdeel, op de 7e plek van de code: `BU0363`**K**`A01`. **K** = Zuid, **T** = Zuidoost.
+
+```{r filteren}
+buurten <- eenzaamheid_ruw |>
+  filter(
+    Gemeentenaam_1 == "Amsterdam",
+    SoortRegio_2   == "Buurt",
+    Leeftijd       == "20300"          # 18 jaar of ouder: nog checken in StatLine
+  ) |>
+  mutate(
+    letter    = substr(Codering_3, 7, 7),
+    eenzaam   = as.numeric(na_if(Eenzaam_25, "."))   # een punt betekent: geen cijfer
+  ) |>
+  filter(letter %in% c("K", "T")) |>
+  mutate(stadsdeel = if_else(letter == "K", "Zuid", "Zuidoost")) |>
+  select(buurtcode = Codering_3, stadsdeel, eenzaam)
+
+buurten
+```
+
+## 1.4 Ontbreken er waarden?
+
+```{r missend}
+buurten |>
+  group_by(stadsdeel) |>
+  summarise(
+    buurten       = n(),
+    zonder_cijfer = sum(is.na(eenzaam))
+  )
+```
+
+Buurten zonder cijfer hebben te weinig inwoners of respondenten. Die vallen af, en dat schrijven we op bij de **populatie**.
+
+## 1.5 Leefbaarheid inladen
+
+**Bron:** Leefbaarometer 3.0, meting 2024, open data (ministerie van BZK), leefbaarometer.nl. Gedownload op 25 november 2026. Uit de zip hebben we alleen het bestand `Leefbaarometer-scores buurten 2002-2024.csv` gehaald en opgeslagen als `data/leefbaarometer_buurten_2002_2024.csv`.
+
+Dit is een gewoon csv-bestand: komma's tussen de kolommen, punt als decimaalteken. Dus gewoon `read_csv()`.
+
+```{r leefbaarheid_inladen}
+leefbaarheid_ruw <- read_csv("data/leefbaarometer_buurten_2002_2024.csv")
+
+glimpse(leefbaarheid_ruw)
+```
+
+Wat betekenen de kolommen?
+
+| Kolom | Betekenis |
+|-------|-----------|
+| `bu_code` | buurtcode, dezelfde codes als in het eenzaamheidsbestand |
+| `jaar` | meetjaar (2002 tot en met 2024) |
+| `lbm` | de totale leefbaarheidsscore: hoe hoger, hoe leefbaarder |
+| `fys`, `onv`, `soc`, `vrz`, `won` | de vijf dimensies: fysieke omgeving, overlast en onveiligheid, sociale samenhang, voorzieningen, woningvoorraad |
+
+Elke buurt staat er meerdere keren in, één rij per meetjaar. Wij nemen alleen 2024, het jaar van de eenzaamheidscijfers.
+
+```{r leefbaarheid_2024}
+leefbaarheid <- leefbaarheid_ruw |>
+  filter(jaar == 2024) |>
+  select(buurtcode = bu_code, buurtnaam = bu_naam, lbm, fys, onv, soc, vrz, won)
+```
+
+## 1.6 De twee bestanden koppelen
+
+Beide bestanden hebben een buurtcode. Met `left_join()` plakken we de leefbaarheid achter elke buurt uit ons eenzaamheidsbestand.
+
+```{r koppelen}
+analyse_data <- buurten |>
+  left_join(leefbaarheid, by = "buurtcode")
+
+analyse_data
+```
+
+Hoeveel buurten hebben allebei de cijfers?
+
+```{r koppelen_check}
+analyse_data |>
+  group_by(stadsdeel) |>
+  summarise(
+    buurten             = n(),
+    zonder_eenzaamheid  = sum(is.na(eenzaam)),
+    zonder_leefbaarheid = sum(is.na(lbm)),
+    allebei             = sum(!is.na(eenzaam) & !is.na(lbm))
+  )
+```
+
+Alleen buurten met allebei de cijfers gaan mee in de analyse.
+
+```{r compleet}
+analyse_compleet <- analyse_data |>
+  filter(!is.na(eenzaam), !is.na(lbm))
+
+nrow(analyse_compleet)
+```
+
+## 1.7 Een eerste blik
+
+Elke stip is één buurt.
+
+```{r eerste_spreidingsdiagram}
+ggplot(analyse_compleet, aes(x = lbm, y = eenzaam, colour = stadsdeel)) +
+  geom_point(size = 2) +
+  labs(x = "Leefbaarheidsscore 2024 (Leefbaarometer)",
+       y = "Eenzaam (% volwassenen, 2024)",
+       colour = "Stadsdeel")
+```
+
+# Deel 2 - Methoden
+
+## 2.1 Populatie
+
+Welke buurten, hoeveel per stadsdeel, en welke vallen af (en waarom)?
+
+<!-- count(), filter() -->
+
+## 2.2 Variabelen
+
+- **Afhankelijke variabele:** `eenzaam`, percentage eenzame volwassenen per buurt (Gezondheidsmonitor 2024)
+- **Onafhankelijke variabele(n):** `lbm`, leefbaarheidsscore per buurt (Leefbaarometer 2024)
+- **Eventuele controlevariabelen:**
+
+<!-- Per variabele: wat meet het, eenheid, meetniveau -->
+
+## 2.3 Meetinstrument
+
+Hoe zijn de variabelen gemeten, met een voorbeelditem. Dit halen we uit de verantwoording van de bron, niet uit R.
+
+## 2.4 Procedure
+
+Stap voor stap hoe we van de gedownloade bestanden bij de analysedataset kwamen. Deze Rmd ís die procedure.
+
+# Deel 3 - Resultaten
+
+## 3.1 Beschrijvende statistiek
+
+## 3.2 Aannames
+
+## 3.3 Toetsende statistiek
