@@ -303,4 +303,70 @@ knitr::kable(
 
 ## 3.2 Aannames
 
+Voor een t-toets (en later regressie) willen we weten: hoe zijn de variabelen verdeeld, en zijn er uitschieters? Net als bij de kittens: eerst kijken, dan toetsen.
+
+### Verdeling: histogrammen
+
+`facet_wrap()` maakt voor elke variabele een eigen paneeltje. `scales = "free"` geeft elk paneel zijn eigen as, omdat de variabelen heel andere eenheden hebben.
+
+```{r aannames_histogram}
+ggplot(lang, aes(x = waarde)) +
+  geom_histogram(bins = 15, fill = "#0A4A8F", color = "white") +
+  facet_wrap(~ variabele, scales = "free") +
+  labs(x = NULL, y = "Aantal buurten")
+```
+
+### Uitschieters: boxplots per stadsdeel
+
+```{r aannames_boxplot}
+ggplot(lang, aes(x = stadsdeel, y = waarde)) +
+  geom_boxplot(fill = "#B8D0EA") +
+  facet_wrap(~ variabele, scales = "free_y") +
+  labs(x = NULL, y = NULL)
+```
+
+Welke buurten hebben de hoogste WOZ-waarde?
+
+```{r duurste_buurten}
+analyse_compleet |>
+  arrange(desc(woz)) |>
+  select(buurtnaam, stadsdeel, woz, lbm, eenzaam) |>
+  head(5)
+```
+
 ## 3.3 Toetsende statistiek
+
+### Deelvraag 3: verschillen tussen Zuid en Zuidoost
+
+Kwantitatieve respons, twee losse groepen buurten: de t-toets voor twee onafhankelijke gemiddelden (Agresti §10.2), zoals in les 6.
+
+- $H_0: \mu_{Zuid} = \mu_{Zuidoost}$
+- $H_a: \mu_{Zuid} \neq \mu_{Zuidoost}$ (tweezijdig)
+
+**Eenzaamheid**
+
+```{r ttoets_eenzaam}
+t.test(eenzaam ~ stadsdeel, data = analyse_compleet)
+```
+
+**Leefbaarheid**
+
+```{r ttoets_lbm}
+t.test(lbm ~ stadsdeel, data = analyse_compleet)
+```
+
+**WOZ-waarde**
+
+```{r ttoets_woz}
+t.test(woz ~ stadsdeel, data = analyse_compleet)
+```
+
+**Rapporteren in één zin** (vul de getallen in uit de uitvoer en uit Tabel 2):
+
+> In Zuidoost was gemiddeld een hoger percentage volwassenen eenzaam (*M* = …, *SD* = …) dan in Zuid (*M* = …, *SD* = …), *t*(…) = …, *p* < ,001, 95%-BI [… ; …].
+
+### Deelvraag 2 en de hoofdvraag: komt in H12 en H13
+
+- Deelvraag 2: `lm(eenzaam ~ lbm, data = analyse_compleet)` (enkelvoudige regressie, H12)
+- Hoofdvraag met controle: `lm(eenzaam ~ lbm + woz, data = analyse_compleet)` (meervoudige regressie, H13)
+- Deelvraag 4: `lm(eenzaam ~ lbm * stadsdeel, data = analyse_compleet)` (interactie, H13)
