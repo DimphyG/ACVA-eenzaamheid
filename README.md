@@ -1,35 +1,47 @@
-# De basis: data inladen en bekijken in R
+# Leefbaarheid en eenzaamheid in Amsterdam Zuid en Zuidoost
 
-Een eerste kennismaking met data in R: bestanden inladen (csv, Excel, rds) en bekijken wat erin zit.
+Groepsonderzoek voor Academische Vaardigheden en Onderzoekspracticum (AcVa deel 2), Doorstroomminor Sociaalwetenschappelijk Onderzoek, Hogeschool van Amsterdam, 2026-2027.
 
-hi :)
+**Groep:** Ali, Dimphy, Monica Hoekstra, Tim van Wissen
+**Docent:** Chantal Schouwenaar
+
+## Onderzoeksvraag
+
+In hoeverre hangt de leefbaarheid van een buurt samen met het percentage eenzame volwassenen, in de stadsdelen Amsterdam-Zuid en Amsterdam-Zuidoost?
+
+| Rol | Variabele | Bron |
+|----|----|----|
+| Afhankelijke variabele | Eenzaamheid: % eenzame volwassenen per buurt, 2024 | Gezondheidsmonitor Volwassenen en Ouderen 2024 (GGD'en/CBS/RIVM), CBS-tabel 50150NED |
+| Onafhankelijke variabele | Leefbaarheidsscore per buurt, 2024 | Leefbaarometer 3.0, meting 2024 (ministerie van BZK) |
+| Controlevariabele | Gemiddelde WOZ-waarde van woningen per buurt, 2024 | CBS, Kerncijfers wijken en buurten 2024 |
+
+Eenheid van analyse: de buurt. In de analyse zitten 102 buurten (64 in Zuid, 38 in Zuidoost).
 
 ## Aan de slag
 
-1.  Download of kloon deze repository.
-2.  Open `RBasisDataInladen.Rproj` in RStudio.
-3.  Installeer de pakketten (één keer), in de Console:
+1. Open `RBasisDataInladen.Rproj` in RStudio.
+2. Installeer de pakketten (één keer per computer), in de Console:
 
-    ``` r
-    install.packages(c("tidyverse", "readxl", "rmarkdown"))
-    ```
+   ``` r
+   install.packages(c("tidyverse", "readxl", "rmarkdown"))
+   ```
 
-4.  Open `Basis_Data_Inladen.Rmd` en voer de blokken code één voor één uit met het groene pijltje.
+3. Open `analyse.Rmd` en kies **Run → Run All**, of knit het bestand met Cmd/Ctrl + Shift + K.
 
-## Inhoud
+## Bestanden
 
 | Bestand | Wat is het |
 |----|----|
-| `Basis_Data_Inladen.Rmd` | De uitleg met code en oefeningen |
-| `data/kittens.csv` | Voorbeelddata, komma's als scheidingsteken |
-| `data/kittens_puntkomma.csv` | Dezelfde data, puntkomma's en decimale komma's |
-| `data/kittens.xlsx` | Dezelfde data als Excel-bestand met twee tabbladen |
-| `data/kittens.rds` | Dezelfde data in het R-formaat |
-| `data/midwest.csv` | Data voor de oefeningen |
-| `renv/`, `renv.lock`, `.Rprofile` | Zorgen dat het project zijn eigen pakkettenbibliotheek gebruikt |
+| `analyse.Rmd` | Alle code: inladen, koppelen, grafieken, tabellen en toetsen |
+| `analyse.html` | Het geknitte resultaat van `analyse.Rmd`: download en open in je browser |
+| `data/50150NED_UntypedDataSet_20261119121801.csv` | Eenzaamheid per buurt (CBS StatLine, gedownload 19-11-2026) |
+| `data/leefbaarometer_buurten_2002_2024.csv` | Leefbaarheidsscores per buurt (Leefbaarometer, gedownload 25-11-2026) |
+| `data/kwb2024.xlsx` | Kerncijfers wijken en buurten 2024 met de WOZ-waarde (CBS, gedownload 25-11-2026) |
 
-how are u?
+De overige bestanden (kittens, midwest, `Toetsen_t_en_z.Rmd`, `Basis_Data_Inladen.Rmd`, `Les 1 R- test.R`) zijn lesmateriaal van Statistiek 2 en horen niet bij het onderzoek.
 
-Goed!!mooi meid! sameeeeemooi meid! sameeeee
+De volledige Leefbaarometer-download (`open-data-leefbaarometer-meting-2024.zip`, 511 MB) staat niet op GitHub omdat hij te groot is. Hij is te downloaden via leefbaarometer.nl.
 
-hi Ali
+## Software
+
+R 4.6.2 met de pakketten tidyverse en readxl.
