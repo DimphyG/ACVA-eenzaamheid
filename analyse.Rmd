@@ -240,6 +240,67 @@ Stap voor stap hoe we van de gedownloade bestanden bij de analysedataset kwamen.
 
 ## 3.1 Beschrijvende statistiek
 
+We willen per variabele dezelfde maten: aantal, gemiddelde, mediaan, standaarddeviatie, minimum en maximum. In plaats van drie keer `summarise()` zetten we de drie variabelen eerst onder elkaar met `pivot_longer()`. Elke buurt staat er dan drie keer in, één keer per variabele.
+
+```{r lang_formaat}
+lang <- analyse_compleet |>
+  pivot_longer(
+    cols      = c(eenzaam, lbm, woz),
+    names_to  = "variabele",
+    values_to = "waarde"
+  ) |>
+  mutate(variabele = recode(variabele,
+    eenzaam = "Eenzaamheid (% volwassenen)",
+    lbm     = "Leefbaarheidsscore (Leefbaarometer)",
+    woz     = "WOZ-waarde (x 1.000 euro)"
+  ))
+```
+
+Nu kunnen we per variabele samenvatten, met `group_by()` en `summarise()` zoals in de les.
+
+```{r tabel_totaal}
+tabel_totaal <- lang |>
+  group_by(Variabele = variabele) |>
+  summarise(
+    N            = n(),
+    Gemiddelde   = mean(waarde),
+    Mediaan      = median(waarde),
+    SD           = sd(waarde),
+    Minimum      = min(waarde),
+    Maximum      = max(waarde)
+  )
+
+knitr::kable(
+  tabel_totaal,
+  digits     = 2,
+  format.args = list(decimal.mark = ",", big.mark = "."),
+  caption    = "Tabel 1. Beschrijvende statistiek van de buurten in Amsterdam Zuid en Zuidoost (2024)"
+)
+```
+
+En hetzelfde per stadsdeel: alleen `stadsdeel` toevoegen aan `group_by()`.
+
+```{r tabel_stadsdeel}
+tabel_stadsdeel <- lang |>
+  group_by(Variabele = variabele, Stadsdeel = stadsdeel) |>
+  summarise(
+    N            = n(),
+    Gemiddelde   = mean(waarde),
+    Mediaan      = median(waarde),
+    SD           = sd(waarde),
+    Minimum      = min(waarde),
+    Maximum      = max(waarde),
+    .groups      = "drop"
+  )
+
+knitr::kable(
+  tabel_stadsdeel,
+  digits     = 2,
+  format.args = list(decimal.mark = ",", big.mark = "."),
+  caption    = "Tabel 2. Beschrijvende statistiek per stadsdeel (2024)"
+)
+```
+
 ## 3.2 Aannames
 
 ## 3.3 Toetsende statistiek
